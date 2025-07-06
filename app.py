@@ -1,59 +1,76 @@
-import numpy as np
-from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
-import pickle
+from flask import Flask, request, render_template
+import os
 import cv2
+import numpy as np
 import tensorflow as tf
 from keras.models import load_model
 from werkzeug.utils import secure_filename
-import os
-from pathlib import Path
 
-
-
-
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
-
+# Initialize Flask app
 app = Flask(__name__)
 
+# Set upload folder and allowed extensions
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Load model
 model = load_model('vgg.h5')
 
-def process_jpg_image(img):
-  img = tf.convert_to_tensor(img[:,:,:3])
-  img = np.expand_dims(img, axis = 0)
-  img = tf.image.resize(img,[224,224])
-  img = (img/255.0)
-  return img
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def process_jpg_image(img):
+    img = tf.convert_to_tensor(img[:, :, :3])
+    img = tf.image.resize(img, [224, 224])
+    img = img / 255.0
+    img = np.expand_dims(img, axis=0)
+    return img
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-
-@app.route('/predict',methods=['GET','POST'])
-
+@app.route('/predict', methods=['POST'])
 def predict():
-    '''
-    For rendering results on HTML GUI
-    '''
-    if request.method == 'POST':
-        file = request.files['file']
+    if 'file' not in request.files:
+        return render_template('index.html', prediction_text='No file part in the request')
+
+    file = request.files['file']
+    if file.filename == '':
+        return render_template('index.html', prediction_text='No file selected')
+
+    if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        
-        class_names = [('fake', 0), ('real', 1)]
-        file_path = '"' + f'uploads/{file.filename}' + '"'
-        file_path = os.path.join('uploads', file.filename)
-        test_image_read_1 = cv2.imread(file_path)
-        test_image_1 = process_jpg_image(test_image_read_1)
-        prediction_1 = model.predict(test_image_1)
-        print(f'dimensions of image used for prediction is: ',test_image_1.shape)
-        prediction = int(np.argmax(prediction_1))
-        print(f"prediction is: ", class_names[prediction][0])
-        return render_template('index.html', prediction_text='The currency is {}'.format(class_names[prediction][0]))
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
 
+        img = cv2.imread(file_path)
+        if img is None:
+            return render_template('index.html', prediction_text='Error reading the image')
 
-if __name__ == "__main__":
+        processed_img = process_jpg_image(img)
+        prediction = model.predict(processed_img)[0]
+
+        # Assuming model predicts [fake_prob, real_prob]
+        fake_percentage = round(prediction[0] * 100, 2)
+        real_percentage = round(prediction[1] * 100, 2)
+
+        if real_percentage > fake_percentage:
+            result = f"Real ({real_percentage}%)"
+        else:
+            result = f"Fake ({fake_percentage}%)"
+
+        return render_template(
+            'index.html',
+            prediction_text=f'The currency is likely: {result}',
+            real_score=real_percentage,
+            fake_score=fake_percentage
+        )
+
+    return render_template('index.html', prediction_text='Invalid file type')
+
+if __name__ == '__main__':
     app.run(debug=True)
