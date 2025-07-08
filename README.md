@@ -1,27 +1,75 @@
-# Fake Indian currency detector
+# Fake Currency Detection
+
+This project is a machine learning-powered web application that detects fake currency notes from images.  
+It uses Python, Flask, and deep learning models to identify whether a given currency note is real or fake.
+
+---
+
+## 🚀 Features
+
+- Upload an image of a currency note for verification
+- Predict whether the note is fake or real using a trained model
+- Simple and user-friendly web interface (Flask + HTML/CSS)
+- Displays prediction results along with model confidence
+
+---
+
+## 🛠 Technology Stack
+
+- **Python**
+- **Flask**
+- **TensorFlow / Keras**
+- **OpenCV**
+- **HTML / CSS / Bootstrap**
+- **Chart.js** (optional for charts)
+
+---
+
+## 📂 Project Structure
+
+```text
+fake_currency_detection/
+├── app.py                     # Main Flask application
+├── fake_currency_detector.ipynb  # Model training notebook
+├── templates/
+│   └── index.html             # Frontend template
+├── static/                    # Static files (CSS, JS, images)
+├── uploads/                   # Uploaded images (runtime)
+├── dataset/                   # Training/testing dataset
+├── confusion.png              # Confusion matrix image (optional)
+├── curves.png                 # Model performance curve (optional)
+└── README.md                  # Project readme
 
 
+---
 
-Summary:
-This web application takes in an image of a currency, runs it through a model and outputs whether the currency image was an original or a fake.
+## ⚡ How to Run Locally
 
-Dataset:
-The original currency notes were taken from mendeley, Indian currency dataset.
-https://data.mendeley.com/datasets/48ympv8jjf/1.
-The fake currency images were gathered from Google and sevel other websites.
-Each original and fake image folders contains 7 currencies viz. Rs.10, Rs.20, Rs.50, Rs.100, Rs.200, Rs.500, Rs.2000
+1️⃣ Clone this repository:
+```bash
+git clone https://github.com/prasanna-016/fake_currency_detection.git
+cd fake_currency_detection
+2️⃣ Install dependencies:
+```bash
+pip install -r requirements.txt
+3️⃣ Run the app:
+```bash
+python app.py
+4️⃣ Open your browser and go to:
+```bash
+http://127.0.0.1:5000/
 
-Model:
-I've use a pretrained VGG-16 model and cconfigured it to make 2 outputs. The model was then ran for 50 epochs which achieved 95% accuracy with negligible loss values.
-The f1 score of the model on validation set was 0.9839.
-The learning curves are:
+```
+📝 Dataset
+Original currency notes: Mendeley Indian Currency Dataset
 
-![learning curves](curves.png)
+Fake currency notes: Collected from Google and other public sources
 
-The model has also performed well on testing set as well:
+🌟 Future Enhancements
+Support more denominations
 
-Confusion heat matrix:
-![confusion heat matrix](confusion.png)
+Improve model accuracy with more data
 
-The model is ready to be deployed on platforms. The requirements and Proc file is also included.
-The application is created using Flask.
+Add API support for mobile apps
+
+Deploy on cloud platforms (Heroku, AWS)
